@@ -1,11 +1,5 @@
-import AuthCard from "@/components/AuthCard";
+import { Navigate } from "react-router-dom";
 
-const Index = () => {
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
-      <AuthCard />
-    </div>
-  );
-};
+const Index = () => <Navigate to="/" replace />;
 
 export default Index;
