@@ -7,6 +7,8 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Matching from "./pages/Matching";
 import Analytics from "./pages/Analytics";
+import AddDonor from "./pages/AddDonor";
+import AddRecipient from "./pages/AddRecipient";
 import NotFound from "./pages/NotFound";
 import { DashboardLayout } from "./components/DashboardLayout";
 
@@ -22,6 +24,8 @@ const App = () => (
           <Route path="/" element={<Login />} />
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/add-donor" element={<AddDonor />} />
+            <Route path="/add-recipient" element={<AddRecipient />} />
             <Route path="/matching" element={<Matching />} />
             <Route path="/analytics" element={<Analytics />} />
           </Route>
