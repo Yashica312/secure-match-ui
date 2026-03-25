@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart } from "lucide-react";
+import { Heart, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,47 +21,61 @@ const AddDonor = () => {
     distance: [50],
     location: "",
   });
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+
+  const validate = () => {
+    const e: Record<string, boolean> = {};
+    if (!form.name.trim()) e.name = true;
+    if (!form.age || Number(form.age) < 1 || Number(form.age) > 100) e.age = true;
+    if (!form.bloodGroup) e.bloodGroup = true;
+    if (!form.organ) e.organ = true;
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.age || !form.bloodGroup || !form.organ) {
-      toast({ title: "Missing fields", description: "Please fill in all required fields.", variant: "destructive" });
+    if (!validate()) {
+      toast({ title: "Validation Error", description: "Please fill in all required fields correctly.", variant: "destructive" });
       return;
     }
-    toast({ title: "Donor registered", description: `${form.name} has been added successfully.` });
+    toast({
+      title: "Donor Registered Successfully",
+      description: `${form.name} has been added to the system.`,
+    });
     setForm({ name: "", age: "", bloodGroup: "", organ: "", healthScore: [80], distance: [50], location: "" });
+    setErrors({});
   };
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div
-        className="rounded-xl border border-border bg-card"
-        style={{ boxShadow: "var(--shadow-elevated)" }}
-      >
-        <div className="flex items-center gap-3 p-6 border-b border-border">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <Heart className="h-5 w-5 text-primary" />
+      <div className="rounded-xl border border-border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-elevated)" }}>
+        {/* Header */}
+        <div className="flex items-center gap-3 p-5 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-glow shadow-sm">
+            <Heart className="h-4.5 w-4.5 text-primary-foreground" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-foreground">Register New Donor</h2>
-            <p className="text-xs text-muted-foreground">Enter donor details below</p>
+            <h2 className="text-[15px] font-bold text-foreground">Register New Donor</h2>
+            <p className="text-[11px] text-muted-foreground">Enter donor medical details below</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-5 space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-[12px] font-semibold">Full Name <span className="text-destructive">*</span></Label>
               <Input
                 id="name"
                 placeholder="Enter full name"
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="rounded-lg"
+                onChange={(e) => { setForm({ ...form, name: e.target.value }); setErrors({ ...errors, name: false }); }}
+                className={`rounded-lg h-10 text-[13px] ${errors.name ? "border-destructive ring-1 ring-destructive/20" : ""}`}
               />
+              {errors.name && <p className="text-[11px] text-destructive">Name is required</p>}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="age">Age *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="age" className="text-[12px] font-semibold">Age <span className="text-destructive">*</span></Label>
               <Input
                 id="age"
                 type="number"
@@ -69,17 +83,18 @@ const AddDonor = () => {
                 min={1}
                 max={100}
                 value={form.age}
-                onChange={(e) => setForm({ ...form, age: e.target.value })}
-                className="rounded-lg"
+                onChange={(e) => { setForm({ ...form, age: e.target.value }); setErrors({ ...errors, age: false }); }}
+                className={`rounded-lg h-10 text-[13px] ${errors.age ? "border-destructive ring-1 ring-destructive/20" : ""}`}
               />
+              {errors.age && <p className="text-[11px] text-destructive">Valid age required (1-100)</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Blood Group *</Label>
-              <Select value={form.bloodGroup} onValueChange={(v) => setForm({ ...form, bloodGroup: v })}>
-                <SelectTrigger className="rounded-lg">
+            <div className="space-y-1.5">
+              <Label className="text-[12px] font-semibold">Blood Group <span className="text-destructive">*</span></Label>
+              <Select value={form.bloodGroup} onValueChange={(v) => { setForm({ ...form, bloodGroup: v }); setErrors({ ...errors, bloodGroup: false }); }}>
+                <SelectTrigger className={`rounded-lg h-10 text-[13px] ${errors.bloodGroup ? "border-destructive ring-1 ring-destructive/20" : ""}`}>
                   <SelectValue placeholder="Select blood group" />
                 </SelectTrigger>
                 <SelectContent>
@@ -88,11 +103,12 @@ const AddDonor = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {errors.bloodGroup && <p className="text-[11px] text-destructive">Blood group is required</p>}
             </div>
-            <div className="space-y-2">
-              <Label>Organ *</Label>
-              <Select value={form.organ} onValueChange={(v) => setForm({ ...form, organ: v })}>
-                <SelectTrigger className="rounded-lg">
+            <div className="space-y-1.5">
+              <Label className="text-[12px] font-semibold">Organ <span className="text-destructive">*</span></Label>
+              <Select value={form.organ} onValueChange={(v) => { setForm({ ...form, organ: v }); setErrors({ ...errors, organ: false }); }}>
+                <SelectTrigger className={`rounded-lg h-10 text-[13px] ${errors.organ ? "border-destructive ring-1 ring-destructive/20" : ""}`}>
                   <SelectValue placeholder="Select organ" />
                 </SelectTrigger>
                 <SelectContent>
@@ -101,24 +117,25 @@ const AddDonor = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {errors.organ && <p className="text-[11px] text-destructive">Organ is required</p>}
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="location" className="text-[12px] font-semibold">Location</Label>
             <Input
               id="location"
               placeholder="e.g. Mumbai"
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
-              className="rounded-lg"
+              className="rounded-lg h-10 text-[13px]"
             />
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5 p-4 rounded-xl bg-muted/40 border border-border/50">
             <div className="flex items-center justify-between">
-              <Label>Health Score</Label>
-              <span className="text-sm font-semibold text-primary">{form.healthScore[0]}%</span>
+              <Label className="text-[12px] font-semibold">Health Score</Label>
+              <span className="text-[13px] font-bold text-primary font-mono">{form.healthScore[0]}%</span>
             </div>
             <Slider
               value={form.healthScore}
@@ -127,13 +144,13 @@ const AddDonor = () => {
               min={0}
               step={1}
             />
-            <p className="text-xs text-muted-foreground">Overall health assessment score of the donor</p>
+            <p className="text-[11px] text-muted-foreground">Overall health assessment score of the donor</p>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5 p-4 rounded-xl bg-muted/40 border border-border/50">
             <div className="flex items-center justify-between">
-              <Label>Distance (km)</Label>
-              <span className="text-sm font-semibold text-primary">{form.distance[0]} km</span>
+              <Label className="text-[12px] font-semibold">Distance</Label>
+              <span className="text-[13px] font-bold text-primary font-mono">{form.distance[0]} km</span>
             </div>
             <Slider
               value={form.distance}
@@ -142,14 +159,13 @@ const AddDonor = () => {
               min={0}
               step={5}
             />
-            <p className="text-xs text-muted-foreground">Approximate distance from the medical center</p>
+            <p className="text-[11px] text-muted-foreground">Approximate distance from the medical center</p>
           </div>
 
-          <div className="pt-2">
-            <Button type="submit" className="w-full rounded-lg h-11 text-sm font-semibold">
-              Register Donor
-            </Button>
-          </div>
+          <Button type="submit" className="w-full rounded-lg h-11 text-[13px] font-bold bg-gradient-to-r from-primary to-primary-glow hover:shadow-[var(--shadow-glow)] transition-all duration-300">
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            Register Donor
+          </Button>
         </form>
       </div>
     </div>
