@@ -1,4 +1,4 @@
-import { Heart, LayoutDashboard, GitCompareArrows, BarChart3, LogOut, UserPlus, HeartHandshake, Activity } from "lucide-react";
+import { Heart, GitCompareArrows, LogOut, HeartHandshake, UserPlus } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -16,11 +16,9 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainNav = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Matching", url: "/matching", icon: GitCompareArrows },
   { title: "Add Donor", url: "/add-donor", icon: HeartHandshake },
   { title: "Add Recipient", url: "/add-recipient", icon: UserPlus },
-  { title: "Matching", url: "/matching", icon: GitCompareArrows },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];
 
 export function AppSidebar() {
@@ -47,7 +45,7 @@ export function AppSidebar() {
       <SidebarContent className="px-2 py-3">
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-muted text-[10px] uppercase tracking-[0.08em] font-semibold mb-1 px-3">
-            Navigation
+            Workflow
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -75,16 +73,6 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {!collapsed && (
-          <div className="mx-3 mt-4 rounded-xl bg-sidebar-accent/60 p-3.5 border border-sidebar-border">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Activity className="h-3.5 w-3.5 text-sidebar-primary" />
-              <span className="text-[11px] font-semibold text-sidebar-accent-foreground">System Status</span>
-            </div>
-            <p className="text-[10px] text-sidebar-muted leading-relaxed">All services operational. Last sync 2m ago.</p>
-          </div>
-        )}
       </SidebarContent>
 
       <SidebarFooter className="p-2 border-t border-sidebar-border">
