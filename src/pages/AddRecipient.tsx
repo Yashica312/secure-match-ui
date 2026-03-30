@@ -6,12 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useData } from "@/context/DataContext";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const organs = ["Kidney", "Liver", "Heart", "Lungs", "Pancreas"];
 
+const urgencyLabel = (v: number) => v >= 8 ? "Critical" : v >= 6 ? "High" : v >= 4 ? "Medium" : "Low";
+const urgencyColorClass = (v: number) => v >= 8 ? "text-destructive" : v >= 6 ? "text-warning" : "text-primary";
+
 const AddRecipient = () => {
   const { toast } = useToast();
+  const { addRecipient } = useData();
   const [form, setForm] = useState({
     name: "",
     age: "",
@@ -21,19 +26,6 @@ const AddRecipient = () => {
     location: "",
   });
   const [errors, setErrors] = useState<Record<string, boolean>>({});
-
-  const urgencyLabel = (v: number) => {
-    if (v >= 8) return "Critical";
-    if (v >= 6) return "High";
-    if (v >= 4) return "Medium";
-    return "Low";
-  };
-
-  const urgencyColorClass = (v: number) => {
-    if (v >= 8) return "text-destructive";
-    if (v >= 6) return "text-warning";
-    return "text-primary";
-  };
 
   const validate = () => {
     const e: Record<string, boolean> = {};
@@ -51,9 +43,19 @@ const AddRecipient = () => {
       toast({ title: "Validation Error", description: "Please fill in all required fields correctly.", variant: "destructive" });
       return;
     }
+    addRecipient({
+      name: form.name,
+      age: Number(form.age),
+      bloodGroup: form.bloodGroup,
+      organ: form.organ,
+      urgency: urgencyLabel(form.urgency[0]) as "Critical" | "High" | "Medium" | "Low",
+      hlaType: "N/A",
+      location: form.location || "Unknown",
+      waitTime: 0,
+    });
     toast({
-      title: "Recipient Registered Successfully",
-      description: `${form.name} has been added to the waitlist.`,
+      title: "Recipient Registered",
+      description: `${form.name} has been added to the waitlist. Go to Matching to find donors.`,
     });
     setForm({ name: "", age: "", bloodGroup: "", organ: "", urgency: [5], location: "" });
     setErrors({});
@@ -76,27 +78,16 @@ const AddRecipient = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="name" className="text-[12px] font-semibold">Full Name <span className="text-destructive">*</span></Label>
-              <Input
-                id="name"
-                placeholder="Enter full name"
-                value={form.name}
+              <Input id="name" placeholder="Enter full name" value={form.name}
                 onChange={(e) => { setForm({ ...form, name: e.target.value }); setErrors({ ...errors, name: false }); }}
-                className={`rounded-lg h-10 text-[13px] ${errors.name ? "border-destructive ring-1 ring-destructive/20" : ""}`}
-              />
+                className={`rounded-lg h-10 text-[13px] ${errors.name ? "border-destructive ring-1 ring-destructive/20" : ""}`} />
               {errors.name && <p className="text-[11px] text-destructive">Name is required</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="age" className="text-[12px] font-semibold">Age <span className="text-destructive">*</span></Label>
-              <Input
-                id="age"
-                type="number"
-                placeholder="e.g. 45"
-                min={1}
-                max={100}
-                value={form.age}
+              <Input id="age" type="number" placeholder="e.g. 45" min={1} max={100} value={form.age}
                 onChange={(e) => { setForm({ ...form, age: e.target.value }); setErrors({ ...errors, age: false }); }}
-                className={`rounded-lg h-10 text-[13px] ${errors.age ? "border-destructive ring-1 ring-destructive/20" : ""}`}
-              />
+                className={`rounded-lg h-10 text-[13px] ${errors.age ? "border-destructive ring-1 ring-destructive/20" : ""}`} />
               {errors.age && <p className="text-[11px] text-destructive">Valid age required (1-100)</p>}
             </div>
           </div>
@@ -108,11 +99,7 @@ const AddRecipient = () => {
                 <SelectTrigger className={`rounded-lg h-10 text-[13px] ${errors.bloodGroup ? "border-destructive ring-1 ring-destructive/20" : ""}`}>
                   <SelectValue placeholder="Select blood group" />
                 </SelectTrigger>
-                <SelectContent>
-                  {bloodGroups.map((bg) => (
-                    <SelectItem key={bg} value={bg}>{bg}</SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectContent>{bloodGroups.map((bg) => <SelectItem key={bg} value={bg}>{bg}</SelectItem>)}</SelectContent>
               </Select>
               {errors.bloodGroup && <p className="text-[11px] text-destructive">Blood group is required</p>}
             </div>
@@ -122,11 +109,7 @@ const AddRecipient = () => {
                 <SelectTrigger className={`rounded-lg h-10 text-[13px] ${errors.organ ? "border-destructive ring-1 ring-destructive/20" : ""}`}>
                   <SelectValue placeholder="Select organ" />
                 </SelectTrigger>
-                <SelectContent>
-                  {organs.map((o) => (
-                    <SelectItem key={o} value={o}>{o}</SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectContent>{organs.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
               </Select>
               {errors.organ && <p className="text-[11px] text-destructive">Organ is required</p>}
             </div>
@@ -134,13 +117,8 @@ const AddRecipient = () => {
 
           <div className="space-y-1.5">
             <Label htmlFor="location" className="text-[12px] font-semibold">Location</Label>
-            <Input
-              id="location"
-              placeholder="e.g. Delhi"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-              className="rounded-lg h-10 text-[13px]"
-            />
+            <Input id="location" placeholder="e.g. Delhi" value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })} className="rounded-lg h-10 text-[13px]" />
           </div>
 
           <div className="space-y-2.5 p-4 rounded-xl bg-muted/40 border border-border/50">
@@ -150,13 +128,7 @@ const AddRecipient = () => {
                 {form.urgency[0]}/10 — {urgencyLabel(form.urgency[0])}
               </span>
             </div>
-            <Slider
-              value={form.urgency}
-              onValueChange={(v) => setForm({ ...form, urgency: v })}
-              max={10}
-              min={1}
-              step={1}
-            />
+            <Slider value={form.urgency} onValueChange={(v) => setForm({ ...form, urgency: v })} max={10} min={1} step={1} />
             <p className="text-[11px] text-muted-foreground">How urgently does this patient need a transplant?</p>
           </div>
 

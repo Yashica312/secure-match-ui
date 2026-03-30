@@ -1,17 +1,20 @@
 import { useState, useMemo } from "react";
-import { recipients, donors, matchExplanations } from "@/data/mockData";
+import { useData } from "@/context/DataContext";
+import { matchExplanations } from "@/data/mockData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles } from "lucide-react";
 import { TopMatchCard } from "@/components/TopMatchCard";
 import { RecipientDetailCard } from "@/components/RecipientDetailCard";
 import { DonorRankingTable } from "@/components/DonorRankingTable";
+import { MatchChart } from "@/components/MatchChart";
 
 const Matching = () => {
+  const { recipients, donors } = useData();
   const [selectedRecipientId, setSelectedRecipientId] = useState<string>("");
 
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id.toString() === selectedRecipientId),
-    [selectedRecipientId]
+    [selectedRecipientId, recipients]
   );
 
   const rankedDonors = useMemo(() => {
@@ -19,7 +22,7 @@ const Matching = () => {
     return donors
       .filter((d) => d.organ === selectedRecipient.organ)
       .sort((a, b) => b.score - a.score);
-  }, [selectedRecipient]);
+  }, [selectedRecipient, donors]);
 
   const topDonor = rankedDonors[0];
 
@@ -31,7 +34,7 @@ const Matching = () => {
           Select Recipient
         </label>
         <Select value={selectedRecipientId} onValueChange={setSelectedRecipientId}>
-          <SelectTrigger className="w-full max-w-md h-11 rounded-lg text-[13px]">
+          <SelectTrigger className="w-full max-w-lg h-11 rounded-lg text-[13px]">
             <SelectValue placeholder="Choose a recipient to match..." />
           </SelectTrigger>
           <SelectContent>
@@ -56,6 +59,9 @@ const Matching = () => {
               <TopMatchCard donor={topDonor} explanation={matchExplanations[topDonor.id]} />
             )}
           </div>
+
+          {/* Chart */}
+          {rankedDonors.length > 0 && <MatchChart donors={rankedDonors} />}
 
           {/* Ranked Table */}
           <DonorRankingTable donors={rankedDonors} />

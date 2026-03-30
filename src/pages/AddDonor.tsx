@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useData } from "@/context/DataContext";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const organs = ["Kidney", "Liver", "Heart", "Lungs", "Pancreas"];
 
 const AddDonor = () => {
   const { toast } = useToast();
+  const { addDonor } = useData();
   const [form, setForm] = useState({
     name: "",
     age: "",
@@ -39,9 +41,19 @@ const AddDonor = () => {
       toast({ title: "Validation Error", description: "Please fill in all required fields correctly.", variant: "destructive" });
       return;
     }
+    addDonor({
+      name: form.name,
+      age: Number(form.age),
+      bloodGroup: form.bloodGroup,
+      organ: form.organ,
+      hlaMatch: form.healthScore[0],
+      location: form.location || "Unknown",
+      waitTime: 0,
+      score: Math.round(form.healthScore[0] * 0.6 + (100 - form.distance[0] / 5) * 0.4),
+    });
     toast({
-      title: "Donor Registered Successfully",
-      description: `${form.name} has been added to the system.`,
+      title: "Donor Registered",
+      description: `${form.name} has been added. Go to Matching to see updated results.`,
     });
     setForm({ name: "", age: "", bloodGroup: "", organ: "", healthScore: [80], distance: [50], location: "" });
     setErrors({});
@@ -50,7 +62,6 @@ const AddDonor = () => {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="rounded-xl border border-border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-elevated)" }}>
-        {/* Header */}
         <div className="flex items-center gap-3 p-5 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-glow shadow-sm">
             <Heart className="h-4.5 w-4.5 text-primary-foreground" />
@@ -65,27 +76,16 @@ const AddDonor = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="name" className="text-[12px] font-semibold">Full Name <span className="text-destructive">*</span></Label>
-              <Input
-                id="name"
-                placeholder="Enter full name"
-                value={form.name}
+              <Input id="name" placeholder="Enter full name" value={form.name}
                 onChange={(e) => { setForm({ ...form, name: e.target.value }); setErrors({ ...errors, name: false }); }}
-                className={`rounded-lg h-10 text-[13px] ${errors.name ? "border-destructive ring-1 ring-destructive/20" : ""}`}
-              />
+                className={`rounded-lg h-10 text-[13px] ${errors.name ? "border-destructive ring-1 ring-destructive/20" : ""}`} />
               {errors.name && <p className="text-[11px] text-destructive">Name is required</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="age" className="text-[12px] font-semibold">Age <span className="text-destructive">*</span></Label>
-              <Input
-                id="age"
-                type="number"
-                placeholder="e.g. 30"
-                min={1}
-                max={100}
-                value={form.age}
+              <Input id="age" type="number" placeholder="e.g. 30" min={1} max={100} value={form.age}
                 onChange={(e) => { setForm({ ...form, age: e.target.value }); setErrors({ ...errors, age: false }); }}
-                className={`rounded-lg h-10 text-[13px] ${errors.age ? "border-destructive ring-1 ring-destructive/20" : ""}`}
-              />
+                className={`rounded-lg h-10 text-[13px] ${errors.age ? "border-destructive ring-1 ring-destructive/20" : ""}`} />
               {errors.age && <p className="text-[11px] text-destructive">Valid age required (1-100)</p>}
             </div>
           </div>
@@ -97,11 +97,7 @@ const AddDonor = () => {
                 <SelectTrigger className={`rounded-lg h-10 text-[13px] ${errors.bloodGroup ? "border-destructive ring-1 ring-destructive/20" : ""}`}>
                   <SelectValue placeholder="Select blood group" />
                 </SelectTrigger>
-                <SelectContent>
-                  {bloodGroups.map((bg) => (
-                    <SelectItem key={bg} value={bg}>{bg}</SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectContent>{bloodGroups.map((bg) => <SelectItem key={bg} value={bg}>{bg}</SelectItem>)}</SelectContent>
               </Select>
               {errors.bloodGroup && <p className="text-[11px] text-destructive">Blood group is required</p>}
             </div>
@@ -111,11 +107,7 @@ const AddDonor = () => {
                 <SelectTrigger className={`rounded-lg h-10 text-[13px] ${errors.organ ? "border-destructive ring-1 ring-destructive/20" : ""}`}>
                   <SelectValue placeholder="Select organ" />
                 </SelectTrigger>
-                <SelectContent>
-                  {organs.map((o) => (
-                    <SelectItem key={o} value={o}>{o}</SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectContent>{organs.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
               </Select>
               {errors.organ && <p className="text-[11px] text-destructive">Organ is required</p>}
             </div>
@@ -123,13 +115,8 @@ const AddDonor = () => {
 
           <div className="space-y-1.5">
             <Label htmlFor="location" className="text-[12px] font-semibold">Location</Label>
-            <Input
-              id="location"
-              placeholder="e.g. Mumbai"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-              className="rounded-lg h-10 text-[13px]"
-            />
+            <Input id="location" placeholder="e.g. Mumbai" value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })} className="rounded-lg h-10 text-[13px]" />
           </div>
 
           <div className="space-y-2.5 p-4 rounded-xl bg-muted/40 border border-border/50">
@@ -137,14 +124,8 @@ const AddDonor = () => {
               <Label className="text-[12px] font-semibold">Health Score</Label>
               <span className="text-[13px] font-bold text-primary font-mono">{form.healthScore[0]}%</span>
             </div>
-            <Slider
-              value={form.healthScore}
-              onValueChange={(v) => setForm({ ...form, healthScore: v })}
-              max={100}
-              min={0}
-              step={1}
-            />
-            <p className="text-[11px] text-muted-foreground">Overall health assessment score of the donor</p>
+            <Slider value={form.healthScore} onValueChange={(v) => setForm({ ...form, healthScore: v })} max={100} min={0} step={1} />
+            <p className="text-[11px] text-muted-foreground">Overall health assessment score</p>
           </div>
 
           <div className="space-y-2.5 p-4 rounded-xl bg-muted/40 border border-border/50">
@@ -152,14 +133,8 @@ const AddDonor = () => {
               <Label className="text-[12px] font-semibold">Distance</Label>
               <span className="text-[13px] font-bold text-primary font-mono">{form.distance[0]} km</span>
             </div>
-            <Slider
-              value={form.distance}
-              onValueChange={(v) => setForm({ ...form, distance: v })}
-              max={500}
-              min={0}
-              step={5}
-            />
-            <p className="text-[11px] text-muted-foreground">Approximate distance from the medical center</p>
+            <Slider value={form.distance} onValueChange={(v) => setForm({ ...form, distance: v })} max={500} min={0} step={5} />
+            <p className="text-[11px] text-muted-foreground">Distance from medical center</p>
           </div>
 
           <Button type="submit" className="w-full rounded-lg h-11 text-[13px] font-bold bg-gradient-to-r from-primary to-primary-glow hover:shadow-[var(--shadow-glow)] transition-all duration-300">
