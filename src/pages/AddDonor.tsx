@@ -6,14 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useData } from "@/context/DataContext";
+import { api } from "@/lib/api";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const organs = ["Kidney", "Liver", "Heart", "Lungs", "Pancreas"];
 
 const AddDonor = () => {
   const { toast } = useToast();
-  const { addDonor } = useData();
   const [form, setForm] = useState({
     name: "",
     age: "",
@@ -24,6 +23,9 @@ const AddDonor = () => {
     location: "",
   });
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
+
+  const normalizeOrgan = (organ: string) => (organ === "Lungs" ? "Lung" : organ);
 
   const validate = () => {
     const e: Record<string, boolean> = {};
@@ -35,28 +37,33 @@ const AddDonor = () => {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
       toast({ title: "Validation Error", description: "Please fill in all required fields correctly.", variant: "destructive" });
       return;
     }
-    addDonor({
-      name: form.name,
-      age: Number(form.age),
-      bloodGroup: form.bloodGroup,
-      organ: form.organ,
-      hlaMatch: form.healthScore[0],
-      location: form.location || "Unknown",
-      waitTime: 0,
-      score: Math.round(form.healthScore[0] * 0.6 + (100 - form.distance[0] / 5) * 0.4),
-    });
-    toast({
-      title: "Donor Registered",
-      description: `${form.name} has been added. Go to Matching to see updated results.`,
-    });
-    setForm({ name: "", age: "", bloodGroup: "", organ: "", healthScore: [80], distance: [50], location: "" });
-    setErrors({});
+    setLoading(true);
+    try {
+      await api.addDonor({
+        name: form.name,
+        age: Number(form.age),
+        blood_group: form.bloodGroup,
+        organ: normalizeOrgan(form.organ),
+        health_score: Number((form.healthScore[0] / 100).toFixed(2)),
+        distance: Number(form.distance[0]),
+      });
+      toast({
+        title: "Donor Registered",
+        description: `${form.name} has been added. Go to Matching to see updated results.`,
+      });
+      setForm({ name: "", age: "", bloodGroup: "", organ: "", healthScore: [80], distance: [50], location: "" });
+      setErrors({});
+    } catch {
+      toast({ title: "Error", description: "Failed to add donor", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -137,9 +144,9 @@ const AddDonor = () => {
             <p className="text-[11px] text-muted-foreground">Distance from medical center</p>
           </div>
 
-          <Button type="submit" className="w-full rounded-lg h-11 text-[13px] font-bold bg-gradient-to-r from-primary to-primary-glow hover:shadow-[var(--shadow-glow)] transition-all duration-300">
+          <Button disabled={loading} type="submit" className="w-full rounded-lg h-11 text-[13px] font-bold bg-gradient-to-r from-primary to-primary-glow hover:shadow-[var(--shadow-glow)] transition-all duration-300">
             <CheckCircle2 className="h-4 w-4 mr-2" />
-            Register Donor
+            {loading ? "Registering..." : "Register Donor"}
           </Button>
         </form>
       </div>

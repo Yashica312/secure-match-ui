@@ -13,6 +13,14 @@ import { DataProvider } from "./context/DataContext";
 
 const queryClient = new QueryClient();
 
+const ProtectedLayout = () => {
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+  return <DashboardLayout />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -21,8 +29,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Login />} />
-            <Route element={<DashboardLayout />}>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route element={<ProtectedLayout />}>
               <Route path="/matching" element={<Matching />} />
               <Route path="/add-donor" element={<AddDonor />} />
               <Route path="/add-recipient" element={<AddRecipient />} />

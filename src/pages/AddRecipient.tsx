@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useData } from "@/context/DataContext";
+import { api } from "@/lib/api";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const organs = ["Kidney", "Liver", "Heart", "Lungs", "Pancreas"];
@@ -16,7 +16,6 @@ const urgencyColorClass = (v: number) => v >= 8 ? "text-destructive" : v >= 6 ? 
 
 const AddRecipient = () => {
   const { toast } = useToast();
-  const { addRecipient } = useData();
   const [form, setForm] = useState({
     name: "",
     age: "",
@@ -26,6 +25,9 @@ const AddRecipient = () => {
     location: "",
   });
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
+
+  const normalizeOrgan = (organ: string) => (organ === "Lungs" ? "Lung" : organ);
 
   const validate = () => {
     const e: Record<string, boolean> = {};
@@ -37,28 +39,32 @@ const AddRecipient = () => {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
       toast({ title: "Validation Error", description: "Please fill in all required fields correctly.", variant: "destructive" });
       return;
     }
-    addRecipient({
-      name: form.name,
-      age: Number(form.age),
-      bloodGroup: form.bloodGroup,
-      organ: form.organ,
-      urgency: urgencyLabel(form.urgency[0]) as "Critical" | "High" | "Medium" | "Low",
-      hlaType: "N/A",
-      location: form.location || "Unknown",
-      waitTime: 0,
-    });
-    toast({
-      title: "Recipient Registered",
-      description: `${form.name} has been added to the waitlist. Go to Matching to find donors.`,
-    });
-    setForm({ name: "", age: "", bloodGroup: "", organ: "", urgency: [5], location: "" });
-    setErrors({});
+    setLoading(true);
+    try {
+      await api.addRecipient({
+        name: form.name,
+        age: Number(form.age),
+        blood_group: form.bloodGroup,
+        organ: normalizeOrgan(form.organ),
+        urgency_score: Number(form.urgency[0]),
+      });
+      toast({
+        title: "Recipient Registered",
+        description: `${form.name} has been added to the waitlist. Go to Matching to find donors.`,
+      });
+      setForm({ name: "", age: "", bloodGroup: "", organ: "", urgency: [5], location: "" });
+      setErrors({});
+    } catch {
+      toast({ title: "Error", description: "Failed to add recipient", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -125,16 +131,16 @@ const AddRecipient = () => {
             <div className="flex items-center justify-between">
               <Label className="text-[12px] font-semibold">Urgency Level</Label>
               <span className={`text-[13px] font-bold font-mono ${urgencyColorClass(form.urgency[0])}`}>
-                {form.urgency[0]}/10 — {urgencyLabel(form.urgency[0])}
+                {form.urgency[0]}/10 - {urgencyLabel(form.urgency[0])}
               </span>
             </div>
             <Slider value={form.urgency} onValueChange={(v) => setForm({ ...form, urgency: v })} max={10} min={1} step={1} />
             <p className="text-[11px] text-muted-foreground">How urgently does this patient need a transplant?</p>
           </div>
 
-          <Button type="submit" className="w-full rounded-lg h-11 text-[13px] font-bold bg-gradient-to-r from-primary to-primary-glow hover:shadow-[var(--shadow-glow)] transition-all duration-300">
+          <Button disabled={loading} type="submit" className="w-full rounded-lg h-11 text-[13px] font-bold bg-gradient-to-r from-primary to-primary-glow hover:shadow-[var(--shadow-glow)] transition-all duration-300">
             <CheckCircle2 className="h-4 w-4 mr-2" />
-            Register Recipient
+            {loading ? "Registering..." : "Register Recipient"}
           </Button>
         </form>
       </div>

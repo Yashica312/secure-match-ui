@@ -6,11 +6,22 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Heart, LogIn, UserPlus } from "lucide-react";
 
 interface AuthCardProps {
-  onLogin?: (username: string, password: string) => void;
-  onSignup?: (username: string, password: string) => void;
+  onLogin?: (username: string, password: string) => Promise<void> | void;
+  onSignup?: (username: string, password: string) => Promise<void> | void;
+  loading?: boolean;
+  loginErrorMessage?: string;
+  signupErrorMessage?: string;
+  signupSuccessMessage?: string;
 }
 
-const AuthCard = ({ onLogin, onSignup }: AuthCardProps) => {
+const AuthCard = ({
+  onLogin,
+  onSignup,
+  loading = false,
+  loginErrorMessage = "",
+  signupErrorMessage = "",
+  signupSuccessMessage = "",
+}: AuthCardProps) => {
   const [activeTab, setActiveTab] = useState("login");
 
   // Login state
@@ -27,7 +38,7 @@ const AuthCard = ({ onLogin, onSignup }: AuthCardProps) => {
   const [signupError, setSignupError] = useState("");
   const [signupSuccess, setSignupSuccess] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
 
@@ -36,11 +47,9 @@ const AuthCard = ({ onLogin, onSignup }: AuthCardProps) => {
       return;
     }
 
-    // Demo: simulate validation
     if (onLogin) {
-      onLogin(loginUsername, loginPassword);
+      await onLogin(loginUsername, loginPassword);
     } else {
-      // Demo mode
       if (loginUsername === "admin" && loginPassword === "password") {
         setLoginError("");
         alert("Login successful!");
@@ -50,7 +59,7 @@ const AuthCard = ({ onLogin, onSignup }: AuthCardProps) => {
     }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupError("");
     setSignupSuccess("");
@@ -71,7 +80,7 @@ const AuthCard = ({ onLogin, onSignup }: AuthCardProps) => {
     }
 
     if (onSignup) {
-      onSignup(signupUsername, signupPassword);
+      await onSignup(signupUsername, signupPassword);
     } else {
       setSignupSuccess("Account created successfully! You can now log in.");
       setSignupUsername("");
@@ -157,14 +166,14 @@ const AuthCard = ({ onLogin, onSignup }: AuthCardProps) => {
                 </div>
               </div>
 
-              {loginError && (
+              {(loginError || loginErrorMessage) && (
                 <div className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
-                  {loginError}
+                  {loginError || loginErrorMessage}
                 </div>
               )}
 
-              <Button type="submit" className="w-full h-11 rounded-xl text-sm font-medium mt-2">
-                Sign In
+              <Button disabled={loading} type="submit" className="w-full h-11 rounded-xl text-sm font-medium mt-2">
+                {loading ? "Signing In..." : "Sign In"}
               </Button>
             </form>
           </TabsContent>
@@ -222,20 +231,20 @@ const AuthCard = ({ onLogin, onSignup }: AuthCardProps) => {
                 />
               </div>
 
-              {signupError && (
+              {(signupError || signupErrorMessage) && (
                 <div className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
-                  {signupError}
+                  {signupError || signupErrorMessage}
                 </div>
               )}
 
-              {signupSuccess && (
+              {(signupSuccess || signupSuccessMessage) && (
                 <div className="text-sm text-success bg-success/10 rounded-lg px-3 py-2">
-                  {signupSuccess}
+                  {signupSuccess || signupSuccessMessage}
                 </div>
               )}
 
-              <Button type="submit" className="w-full h-11 rounded-xl text-sm font-medium mt-2">
-                Create Account
+              <Button disabled={loading} type="submit" className="w-full h-11 rounded-xl text-sm font-medium mt-2">
+                {loading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
           </TabsContent>
