@@ -37,34 +37,35 @@ const AddDonor = () => {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) {
-      toast({ title: "Validation Error", description: "Please fill in all required fields correctly.", variant: "destructive" });
-      return;
-    }
-    setLoading(true);
-    try {
-      await api.addDonor({
-        name: form.name,
-        age: Number(form.age),
-        blood_group: form.bloodGroup,
-        organ: normalizeOrgan(form.organ),
-        health_score: Number((form.healthScore[0] / 100).toFixed(2)),
-        distance: Number(form.distance[0]),
-      });
-      toast({
-        title: "Donor Registered",
-        description: `${form.name} has been added. Go to Matching to see updated results.`,
-      });
-      setForm({ name: "", age: "", bloodGroup: "", organ: "", healthScore: [80], distance: [50], location: "" });
-      setErrors({});
-    } catch {
-      toast({ title: "Error", description: "Failed to add donor", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const API = "https://ai-organ-matching-system.onrender.com";
+
+const handleSubmit = async () => {
+  try {
+    const res = await fetch(`${API}/api/donors`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name,
+        age: Number(age),
+        blood_group: bloodGroup,
+        organ,
+        health_score: Number(healthScore),
+        distance: Number(distance)
+      })
+    });
+
+    const data = await res.json();
+
+    if (!data.success) throw new Error();
+
+    alert("Donor added successfully");
+  } catch (err) {
+    console.error(err);
+    alert("Failed to add donor");
+  }
+};
 
   return (
     <div className="max-w-2xl mx-auto">
