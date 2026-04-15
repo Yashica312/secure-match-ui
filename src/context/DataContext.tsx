@@ -22,6 +22,8 @@ interface Recipient {
 interface DataContextType {
   donors: Donor[];
   recipients: Recipient[];
+  loading: boolean;
+  error: string | null;
   addDonor: (donor: any) => Promise<void>;
   addRecipient: (recipient: any) => Promise<void>;
   refreshData: () => Promise<void>;
@@ -29,59 +31,119 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | null>(null);
 
+// 🔥 HARD-CODED API (NO ENV ISSUES)
 const API = "https://ai-organ-matching-system.onrender.com";
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [donors, setDonors] = useState<Donor[]>([]);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // =========================
-  // FETCH DATA
+  // FETCH DONORS
   // =========================
   const fetchDonors = async () => {
-    const res = await fetch(`${API}/api/donors`);
-    const result = await res.json();
-    if (result.success) setDonors(result.data);
+    try {
+      const res = await fetch(`${API}/api/donors`);
+      const result = await res.json();
+
+      if (result.success) {
+        setDonors(result.data || []);
+      } else {
+        throw new Error(result.error?.message || "Failed to fetch donors");
+      }
+    } catch (err: any) {
+      console.error("Donor fetch error:", err);
+      setError("Failed to fetch donors");
+    }
   };
 
+  // =========================
+  // FETCH RECIPIENTS
+  // =========================
   const fetchRecipients = async () => {
-    const res = await fetch(`${API}/api/recipients`);
-    const result = await res.json();
-    if (result.success) setRecipients(result.data);
+    try {
+      const res = await fetch(`${API}/api/recipients`);
+      const result = await res.json();
+
+      console.log("Recipients API response:", result); // 🔍 DEBUG
+
+      if (result.success) {
+        setRecipients(result.data || []);
+      } else {
+        throw new Error(result.error?.message || "Failed to fetch recipients");
+      }
+    } catch (err: any) {
+      console.error("Recipient fetch error:", err);
+      setError("Failed to fetch recipients");
+    }
   };
 
+  // =========================
+  // REFRESH BOTH
+  // =========================
   const refreshData = async () => {
-    await Promise.all([fetchDonors(), fetchRecipients()]);
+    setLoading(true);
+    setError(null);
+
+    try {
+      await Promise.all([fetchDonors(), fetchRecipients()]);
+    } catch (err) {
+      console.error("Refresh error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // =========================
   // ADD DONOR
   // =========================
   const addDonor = async (donor: any) => {
-    await fetch(`${API}/api/donors`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(donor)
-    });
+    try {
+      const res = await fetch(`${API}/api/donors`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(donor)
+      });
 
-    await fetchDonors();
+      const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(result.error?.message || "Failed to add donor");
+      }
+
+      await fetchDonors();
+    } catch (err) {
+      console.error("Add donor error:", err);
+    }
   };
 
   // =========================
   // ADD RECIPIENT
   // =========================
   const addRecipient = async (recipient: any) => {
-    await fetch(`${API}/api/recipients`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(recipient)
-    });
+    try {
+      const res = await fetch(`${API}/api/recipients`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(recipient)
+      });
 
-    await fetchRecipients();
+      const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(result.error?.message || "Failed to add recipient");
+      }
+
+      await fetchRecipients();
+    } catch (err) {
+      console.error("Add recipient error:", err);
+    }
   };
 
   // =========================
@@ -92,7 +154,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DataContext.Provider value={{ donors, recipients, addDonor, addRecipient, refreshData }}>
+    <DataContext.Provider
+      value={{
+        donors,
+        recipients,
+        loading,
+        error,
+        addDonor,
+        addRecipient,
+        refreshData
+      }}
+    >
       {children}
     </DataContext.Provider>
   );
