@@ -5,7 +5,6 @@ import { TopMatchCard } from "@/components/TopMatchCard";
 import { RecipientDetailCard } from "@/components/RecipientDetailCard";
 import { DonorRankingTable } from "@/components/DonorRankingTable";
 import { MatchChart } from "@/components/MatchChart";
-import { api } from "@/lib/api";
 
 const urgencyLabel = (value: number) => {
   if (value >= 8) return "Critical";
