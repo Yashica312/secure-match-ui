@@ -28,13 +28,10 @@ const Login = () => {
 
       const data = await res.json();
 
-      if (!data.success) {
-        throw new Error();
-      }
+      if (!data.success) throw new Error();
 
       localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("username", username);
-      navigate("/matching"); // 🔥 IMPORTANT (not /dashboard)
+      navigate("/matching");
     } catch {
       setLoginError("Invalid credentials");
     } finally {
@@ -59,9 +56,7 @@ const Login = () => {
 
       const data = await res.json();
 
-      if (!data.success) {
-        throw new Error();
-      }
+      if (!data.success) throw new Error();
 
       setSignupSuccess("Account created. Please log in.");
     } catch {
@@ -72,7 +67,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center">
       <AuthCard
         onLogin={handleLogin}
         onSignup={handleSignup}
