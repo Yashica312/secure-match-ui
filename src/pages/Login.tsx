@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthCard from "@/components/AuthCard";
-import { api } from "@/lib/api";
+
+const API = "https://ai-organ-matching-system.onrender.com";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -15,11 +16,25 @@ const Login = () => {
     setLoginError("");
     setSignupError("");
     setSignupSuccess("");
+
     try {
-      await api.login(username, password);
+      const res = await fetch(`${API}/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error();
+      }
+
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("username", username);
-      navigate("/dashboard");
+      navigate("/matching"); // 🔥 IMPORTANT (not /dashboard)
     } catch {
       setLoginError("Invalid credentials");
     } finally {
@@ -32,8 +47,22 @@ const Login = () => {
     setLoginError("");
     setSignupError("");
     setSignupSuccess("");
+
     try {
-      await api.register(username, password);
+      const res = await fetch(`${API}/api/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error();
+      }
+
       setSignupSuccess("Account created. Please log in.");
     } catch {
       setSignupError("Registration failed");
