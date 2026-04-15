@@ -29,7 +29,7 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | null>(null);
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || "https://ai-organ-matching-system.onrender.com";
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [donors, setDonors] = useState<Donor[]>([]);
